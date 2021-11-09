@@ -26,149 +26,41 @@ public class DrunkenTowerOfHanoi
 		 */
 		public static int drunkenTowerOfHanoi(int discs, int tiles, int rodA, int rodB, int rodC, int trials)
 		{
-			// integer to hold totalt moves made
-			int numOfTurns = 0;
+			// player of the game, refer to TowerOfHanoiPlayer
+			TowerOfHanoiPlayer player;
+			// integer to hold total moves made
+			int sumNumOfTurns = 0;
 			// loop for each trial
 			for(int i = 0; i < trials; i++)
 			{
-				// Begin by creating the field. It will be an array of stacks
+				// Begin by creating the field. It will be an array of stacks of TowerOfHanoiDiscs
 				LinkedStack<TowerOfHanoiDisc>[] gameBoard = new LinkedStack[tiles];
+				// the game board will be instantiated as entirely empty stacks for a total of tiles indexes
 				for(int j = 0; j < tiles; j++)
 				{
 					gameBoard[j] = new LinkedStack();
 				}
 				// After the board is created, use rodA to initialize n discs
-				int size = discs;
 				for(int j = discs; j > 0; j--)
 				{
-					gameBoard[rodA-1].push(new TowerOfHanoiDisc(size));
-					size--;
+					// for the total number of discs, push them onto rodA in order of smallest at the top and largest at the bottom
+					gameBoard[rodA-1].push(new TowerOfHanoiDisc(j));
 				}
 				// now that the board has been set up, the game can begin being played
-				// the game begins at rod B
-				TowerOfHanoiPlayer player = new TowerOfHanoiPlayer(rodB-1);
+				// the player begins at rod B
+				player = new TowerOfHanoiPlayer(rodB-1);
 				// for each turn, it is randomly decided whether the player moves to the left or right
 				// the game runs until all discs are on rod C
 				while(!(gameBoard[rodA-1].isEmpty() && gameBoard[rodB-1].isEmpty() && player.getCurrentDisc() == null))
 				{
-					// special case for only 1 disc
-					if(discs == 1)
-					{
-						numOfTurns += moveTo(rodA-1, player, tiles);
-						// grab disc from rodA
-						player.grab(gameBoard[rodA-1].getTop());
-						gameBoard[rodA-1].pop();
-						// place on rodC
-						numOfTurns += moveTo(rodC-1, player, tiles);
-						gameBoard[rodC-1].push(player.getCurrentDisc());
-						player.place();
-					}
-					else
-					{
-						// continue the pattern of returning to rodA until it is empty
-						if(!gameBoard[rodA-1].isEmpty())
-						{
-							// initial move will always go to rodA so long as it is not empty
-							numOfTurns += moveTo(rodA-1, player, tiles);
-							// grab disc from rodA
-							player.grab(gameBoard[rodA-1].getTop());
-							gameBoard[rodA-1].pop();
-							// if rodB is empty place the disc on rodB 
-							if(gameBoard[rodB-1].isEmpty())
-							{
-								numOfTurns += moveTo(rodB-1, player, tiles);
-								gameBoard[rodB-1].push(player.getCurrentDisc());
-								player.place();
-							}
-							// otherwise compare the disc to rodB to see if it fits on top
-							else if(!player.getCurrentDisc().compare(gameBoard[rodB-1].getTop().getInfo()))
-							{
-								numOfTurns += moveTo(rodB-1, player, tiles);
-								gameBoard[rodB-1].push(player.getCurrentDisc());
-								player.place();
-							}
-							// if the current disc is larger, put it on rod C
-							else if(player.getCurrentDisc().compare(gameBoard[rodB-1].getTop().getInfo()))
-							{
-								numOfTurns += moveTo(rodC-1, player, tiles);
-								gameBoard[rodC-1].push(player.getCurrentDisc());
-								player.place();
-							}
-						}
-						// if rodA is empty and RodB top is larger than rodC top
-						else if(!gameBoard[rodB-1].isEmpty() && !gameBoard[rodC-1].getTop().getInfo().compare(gameBoard[rodB-1].getTop().getInfo()))
-						{
-							// continue this pattern until the top of rodB can be placed onto rodC, or until rodB is empty
-							while(!gameBoard[rodB-1].isEmpty() && !gameBoard[rodC-1].getTop().getInfo().compare(gameBoard[rodB-1].getTop().getInfo()))
-							{
-								// move to rod B, and place the disc on rodA
-								numOfTurns += moveTo(rodB-1, player, tiles);
-								player.grab(gameBoard[rodB-1].getTop());
-								gameBoard[rodB-1].pop();
-								numOfTurns += moveTo(rodA-1, player, tiles);
-								gameBoard[rodA-1].push(player.getCurrentDisc());
-								player.place();
-							}
-							// once complete put the top of rodC on RodB
-							numOfTurns += moveTo(rodC-1, player, tiles);
-							player.grab(gameBoard[rodC-1].getTop());
-							gameBoard[rodC-1].pop();
-							numOfTurns += moveTo(rodB-1, player, tiles);
-							gameBoard[rodB-1].push(player.getCurrentDisc());
-							player.place();
-						}
-						// if RodBs top is smaller than rod Cs move the top of rodB to rodC
-						else if(!gameBoard[rodB-1].isEmpty() && gameBoard[rodC-1].getTop().getInfo().compare(gameBoard[rodB-1].getTop().getInfo()))
-						{
-							numOfTurns += moveTo(rodB-1, player, tiles);
-							player.grab(gameBoard[rodB-1].getTop());
-							gameBoard[rodB-1].pop();
-							numOfTurns += moveTo(rodC-1, player, tiles);
-							gameBoard[rodC-1].push(player.getCurrentDisc());
-							player.place();
-						}
-					}
+					// refer to standard algorithm for solution
+					player.solve(discs, rodA, rodB, rodC, tiles, gameBoard);
 				}
+				// add the current players number of turns to the sum of number of turns
+				sumNumOfTurns += player.getNumOfTurns();
 			}
-			return numOfTurns / trials;
+			// return the total number of turns by all players divided by the number of trials for average turns
+			return sumNumOfTurns / trials;
 		}
-		// moves the player in tower of Hanoi to the location necessary
-		public static int moveTo(int rod, TowerOfHanoiPlayer player, int tiles)
-		{
-			// store total number of moves
-			int numOfTurns = 0;
-			// loop until at the correct location
-			while(player.getLocation() != rod)
-			{
-				// use random to randomly pick a direction
-				double direction = Math.random();
-				player.locationChange(player.getLocation(), tiles, direction);
-				numOfTurns++;
-			}
-			return numOfTurns;
-		}
-		// method for standard tower of Hanoi
-		public void towersOfHanoi(int discs, LinkedStack<TowerOfHanoiDisc> rodA,
-				LinkedStack<TowerOfHanoiDisc> rodB, LinkedStack<TowerOfHanoiDisc> rodC)
-		{
-			// base case of only 1 disc
-			if(discs == 1)
-			{	
-				// move the disc from rod A to C
-				rodC.push(rodA.top());
-				rodA.pop();
-			}
-			// Recursive case
-			else
-			{
-				// move n-1 discs from starting rod to middle rod
-				towersOfHanoi(discs-1, rodA, rodC, rodB);
-				// move nth disc to ending ring
-				rodC.push(rodA.top());
-				rodA.pop();
-				// move n-1 discs from middle rod to ending rod
-				towersOfHanoi(discs-1, rodB, rodA, rodC);
-				
-			}
-		}
+
 }
